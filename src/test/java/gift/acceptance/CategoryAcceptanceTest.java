@@ -6,11 +6,14 @@ import gift.model.OptionRepository;
 import gift.model.ProductRepository;
 import gift.model.WishRepository;
 import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -40,6 +43,26 @@ class CategoryAcceptanceTest {
         optionRepository.deleteAllInBatch();
         productRepository.deleteAllInBatch();
         categoryRepository.deleteAllInBatch();
+    }
+
+    @Test
+    void 카테고리_생성_성공() {
+        // given
+        var request = Map.of("name", "음료");
+
+        // when
+        var response = RestAssured.given().log().all()
+                .contentType(ContentType.JSON)
+                .body(request)
+                .when()
+                .post("/api/categories")
+                .then().log().all()
+                .extract();
+
+        // then
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.jsonPath().getLong("id")).isNotNull();
+        assertThat(response.jsonPath().getString("name")).isEqualTo("음료");
     }
 
     @Test
