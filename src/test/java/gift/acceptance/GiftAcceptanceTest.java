@@ -1,12 +1,10 @@
 package gift.acceptance;
 
-import gift.model.Category;
 import gift.model.CategoryRepository;
 import gift.model.Member;
 import gift.model.MemberRepository;
 import gift.model.Option;
 import gift.model.OptionRepository;
-import gift.model.Product;
 import gift.model.ProductRepository;
 import gift.model.WishRepository;
 import io.restassured.RestAssured;
@@ -165,8 +163,13 @@ class GiftAcceptanceTest {
     @Test
     void 상품_등록부터_선물하기_전체_흐름() {
         // given
-        var category = categoryRepository.save(new Category("음료"));
-        var product = productRepository.save(new Product("아메리카노", 4500, "http://example.com/image.jpg", category));
+        var categoryResponse = 카테고리_생성("음료");
+        assertThat(categoryResponse.statusCode()).isEqualTo(200);
+
+        var productResponse = 상품_생성("아메리카노", 4500, "http://example.com/image.jpg", categoryResponse.jsonPath().getLong("id"));
+        assertThat(productResponse.statusCode()).isEqualTo(200);
+
+        var product = productRepository.findById(productResponse.jsonPath().getLong("id")).get();
         var option = optionRepository.save(new Option("ICE", 10, product));
 
         // when
@@ -199,9 +202,39 @@ class GiftAcceptanceTest {
     }
 
     private Option 옵션_생성(int quantity) {
-        var category = categoryRepository.save(new Category("음료"));
-        var product = productRepository.save(new Product("아메리카노", 4500, "http://example.com/image.jpg", category));
+        var categoryResponse = 카테고리_생성("음료");
+        assertThat(categoryResponse.statusCode()).isEqualTo(200);
+
+        var productResponse = 상품_생성("아메리카노", 4500, "http://example.com/image.jpg", categoryResponse.jsonPath().getLong("id"));
+        assertThat(productResponse.statusCode()).isEqualTo(200);
+
+        var product = productRepository.findById(productResponse.jsonPath().getLong("id")).get();
         return optionRepository.save(new Option("ICE", quantity, product));
+    }
+
+    private ExtractableResponse<Response> 카테고리_생성(String name) {
+        return RestAssured.given()
+                .contentType(ContentType.JSON)
+                .body(Map.of("name", name))
+                .when()
+                .post("/api/categories")
+                .then()
+                .extract();
+    }
+
+    private ExtractableResponse<Response> 상품_생성(String name, int price, String imageUrl, Long categoryId) {
+        return RestAssured.given()
+                .contentType(ContentType.JSON)
+                .body(Map.of(
+                        "name", name,
+                        "price", price,
+                        "imageUrl", imageUrl,
+                        "categoryId", categoryId
+                ))
+                .when()
+                .post("/api/products")
+                .then()
+                .extract();
     }
 
     private ExtractableResponse<Response> 선물_전달(Long optionId, int quantity) {
