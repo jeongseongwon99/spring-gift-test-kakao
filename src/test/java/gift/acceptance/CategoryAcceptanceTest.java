@@ -73,6 +73,8 @@ class CategoryAcceptanceTest {
 
         // then
         assertThat(response.statusCode()).isEqualTo(200);
+
+        assertThat(response.jsonPath().getList("id")).doesNotContainNull();
         assertThat(response.jsonPath().getList("name"))
                 .containsExactlyInAnyOrder("음료", "디저트");
     }

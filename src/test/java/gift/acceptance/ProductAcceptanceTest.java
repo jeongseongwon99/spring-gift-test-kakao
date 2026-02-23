@@ -87,8 +87,14 @@ class ProductAcceptanceTest {
 
         // then
         assertThat(response.statusCode()).isEqualTo(200);
+
+        assertThat(response.jsonPath().getList("id")).doesNotContainNull();
         assertThat(response.jsonPath().getList("name"))
                 .containsExactlyInAnyOrder("아메리카노", "카페라떼");
+        assertThat(response.jsonPath().getList("price"))
+                .containsExactlyInAnyOrder(4500, 5000);
+        assertThat(response.jsonPath().getList("imageUrl")).doesNotContainNull();
+        assertThat(response.jsonPath().getList("category")).doesNotContainNull();
     }
 
     private ExtractableResponse<Response> 카테고리_생성(String name) {
