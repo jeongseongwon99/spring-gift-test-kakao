@@ -38,11 +38,11 @@ tasks.named('test') {
 	}
 }
 
-tasks.register('dockerComposeUp', Exec) {
+tasks.register('dockerUp', Exec) {
 	commandLine 'docker-compose', 'up', '--wait'
 }
 
-tasks.register('dockerComposeDown', Exec) {
+tasks.register('dockerDown', Exec) {
 	commandLine 'docker-compose', 'down'
 }
 
@@ -66,5 +66,5 @@ tasks.register('cucumberTest', Test) {
 		}
 		logger.lifecycle('[cucumberTest] PostgreSQL 준비 완료')
 	}
-	finalizedBy 'dockerComposeDown'
+	finalizedBy 'dockerDown'
 }
