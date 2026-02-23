@@ -50,6 +50,7 @@ class GiftAcceptanceTest {
     @BeforeEach
     void setUp() {
         RestAssured.port = port;
+        RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 
         wishRepository.deleteAllInBatch();
         optionRepository.deleteAllInBatch();
@@ -103,7 +104,7 @@ class GiftAcceptanceTest {
     @Test
     void 존재하지_않는_옵션으로_선물시_실패한다() {
         // given
-        var nonExistentOptionId = 999999L;
+        var nonExistentOptionId = Long.MAX_VALUE;
 
         // when
         var response = 선물_전달(nonExistentOptionId, 1);
@@ -116,10 +117,10 @@ class GiftAcceptanceTest {
     void 존재하지_않는_회원이_선물시_실패한다() {
         // given
         var option = 옵션_생성(10);
-        var nonExistentMemberId = 999999L;
+        var nonExistentMemberId = Long.MAX_VALUE;
 
         // when
-        var response = RestAssured.given().log().all()
+        var response = RestAssured.given()
                 .contentType(ContentType.JSON)
                 .header("Member-Id", nonExistentMemberId)
                 .body(Map.of(
@@ -130,7 +131,7 @@ class GiftAcceptanceTest {
                 ))
                 .when()
                 .post("/api/gifts")
-                .then().log().all()
+                .then()
                 .extract();
 
         // then
@@ -144,7 +145,7 @@ class GiftAcceptanceTest {
         var option = 옵션_생성(10);
 
         // when
-        var response = RestAssured.given().log().all()
+        var response = RestAssured.given()
                 .contentType(ContentType.JSON)
                 .body(Map.of(
                         "optionId", option.getId(),
@@ -154,7 +155,7 @@ class GiftAcceptanceTest {
                 ))
                 .when()
                 .post("/api/gifts")
-                .then().log().all()
+                .then()
                 .extract();
 
         // then
@@ -180,8 +181,14 @@ class GiftAcceptanceTest {
     void 연속_선물로_재고_소진_후_추가_선물시_실패한다() {
         // given
         var option = 옵션_생성(5);
-        선물_전달(option.getId(), 3);
-        선물_전달(option.getId(), 2);
+
+        var first = 선물_전달(option.getId(), 3);
+        assertThat(first.statusCode()).isEqualTo(200);
+        assertThat(optionRepository.findById(option.getId()).get().getQuantity()).isEqualTo(2);
+
+        var second = 선물_전달(option.getId(), 2);
+        assertThat(second.statusCode()).isEqualTo(200);
+        assertThat(optionRepository.findById(option.getId()).get().getQuantity()).isEqualTo(0);
 
         // when
         var response = 선물_전달(option.getId(), 1);
@@ -198,7 +205,7 @@ class GiftAcceptanceTest {
     }
 
     private ExtractableResponse<Response> 선물_전달(Long optionId, int quantity) {
-        return RestAssured.given().log().all()
+        return RestAssured.given()
                 .contentType(ContentType.JSON)
                 .header("Member-Id", senderId)
                 .body(Map.of(
@@ -209,7 +216,7 @@ class GiftAcceptanceTest {
                 ))
                 .when()
                 .post("/api/gifts")
-                .then().log().all()
+                .then()
                 .extract();
     }
 }
