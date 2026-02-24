@@ -38,33 +38,27 @@ tasks.named('test') {
 	}
 }
 
+tasks.register('dockerBuild', Exec) {
+	commandLine 'docker-compose', '-f', 'docker-compose.e2e.yml', 'build'
+}
+
 tasks.register('dockerUp', Exec) {
-	commandLine 'docker-compose', 'up', '--wait'
+	commandLine 'docker-compose', '-f', 'docker-compose.e2e.yml', 'up', '-d', '--wait'
 }
 
 tasks.register('dockerDown', Exec) {
-	commandLine 'docker-compose', 'down'
+	commandLine 'docker-compose', '-f', 'docker-compose.e2e.yml', 'down', '--rmi', 'local'
 }
 
 tasks.register('cucumberTest', Test) {
 	useJUnitPlatform()
-	systemProperty 'spring.profiles.active', 'cucumber'
 	outputs.upToDateWhen { false }
 	testLogging {
 		events 'passed', 'skipped', 'failed'
 		showStandardStreams = true
 	}
-	systemProperty 'cucumber.glue', 'gift.cucumber'
+	systemProperty 'cucumber.glue', 'gift.e2e'
 	systemProperty 'cucumber.features', 'src/test/resources/features'
 	systemProperty 'cucumber.plugin', 'pretty'
-	include 'gift/cucumber/**'
-	exclude 'gift/acceptance/**'
-	doFirst {
-		logger.lifecycle('[cucumberTest] Docker Compose 시작...')
-		exec {
-			commandLine 'docker-compose', 'up', '--wait'
-		}
-		logger.lifecycle('[cucumberTest] PostgreSQL 준비 완료')
-	}
-	finalizedBy 'dockerDown'
+	include 'gift/e2e/**'
 }
