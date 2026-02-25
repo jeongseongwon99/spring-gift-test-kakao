@@ -62,3 +62,12 @@ tasks.register('cucumberTest', Test) {
 	systemProperty 'cucumber.plugin', 'pretty'
 	include 'gift/e2e/**'
 }
+
+tasks.register('cucumberE2eTest') {
+	dependsOn 'dockerUp', 'cucumberTest'
+	finalizedBy 'dockerDown'
+}
+
+tasks.named('cucumberTest').configure {
+	mustRunAfter 'dockerUp'
+}

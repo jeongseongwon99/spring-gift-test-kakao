@@ -2,12 +2,13 @@
 
 ## 테스트 실행
 
-2종류의 테스트를 제공합니다.
+3종류의 테스트를 제공합니다.
 
 | 태스크 | DB | 앱 실행 방식 | 용도 |
 |---|---|---|---|
 | `./gradlew test` | H2 (인메모리) | `@SpringBootTest` | 단위 + 인수테스트 |
-| `./gradlew cucumberTest` | PostgreSQL (Docker) | Docker 컨테이너 | Cucumber E2E 테스트 |
+| `./gradlew cucumberTest` | PostgreSQL (Docker) | Docker 컨테이너 | Cucumber E2E 테스트 (수동 관리) |
+| `./gradlew cucumberE2eTest` | PostgreSQL (Docker) | Docker 컨테이너 | Cucumber E2E 테스트 (자동 관리) |
 
 ### 1. 인수테스트
 
@@ -23,9 +24,25 @@ JUnit 인수테스트만 실행:
 ./gradlew test --tests "gift.acceptance.*"
 ```
 
-### 2. Cucumber 테스트 (Docker E2E)
+### 2. Cucumber E2E 테스트 — 자동 관리
 
 Spring Boot 앱과 PostgreSQL 모두 Docker 컨테이너에서 실행합니다.
+컨테이너 시작부터 정리까지 자동으로 수행합니다.
+
+**사전 조건**: Docker 실행 중
+
+```bash
+./gradlew cucumberE2eTest
+```
+
+내부 실행 순서:
+1. `dockerUp` — App + PostgreSQL 컨테이너 시작 (`--wait`로 healthy 대기)
+2. `cucumberTest` — Docker 환경에서 테스트 실행
+3. `dockerDown` — 성공/실패 관계없이 컨테이너 정리 (`finalizedBy`)
+
+### 3. Cucumber E2E 테스트 — 수동 관리
+
+각 단계를 직접 제어하고 싶을 때 사용합니다.
 
 **사전 조건**: Docker 실행 중
 
@@ -41,7 +58,7 @@ curl http://localhost:28080/api/categories   # 애플리케이션 응답 확인
 
 ```
 build/reports/tests/test/index.html          # test
-build/reports/tests/cucumberTest/index.html  # cucumberTest
+build/reports/tests/cucumberTest/index.html  # cucumberTest / cucumberE2eTest
 ```
 
 ## 아키텍처
